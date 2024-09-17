@@ -7,6 +7,12 @@
   #+little-endian :little-endian
   #+big-endian  :big-endian)
 
+(declaim (inline select-io-function))
+(defun select-io-function (le be)
+  (declare (ignorable le be))
+  #+little-endian le
+  #+big-endian    be)
+
 (defparameter *dtypes* '())
 
 (defstruct (dtype
@@ -43,14 +49,8 @@
     reader/le writer/le :little-endian)
   (define-dtype (concatenate 'string ">" code) type
     reader/be writer/be :big-endian)
-  ;; SBCL produces notes like "deleting unreachable code" here which
-  ;; is OK, because +ENDIANNESS+ is a constant.
-  (let ((default-reader (ecase +endianness+
-                          (:little-endian reader/le)
-                          (:big-endian    reader/be)))
-        (default-writer (ecase +endianness+
-                          (:little-endian writer/le)
-                          (:big-endian    writer/be))))
+  (let ((default-reader (select-io-function reader/le reader/be))
+        (default-writer (select-io-function writer/le writer/be)))
     (define-dtype code type default-reader default-writer +endianness+)
     (define-dtype (concatenate 'string "|" code)
         type default-reader default-writer +endianness+)
