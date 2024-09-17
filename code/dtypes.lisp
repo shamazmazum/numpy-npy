@@ -1,26 +1,21 @@
 (in-package #:numpy-file-format)
 
+(deftype endianness () '(member :little-endian :big-endian))
+
+(declaim (type endianness +endianness+))
 (defconstant +endianness+
   #+little-endian :little-endian
   #+big-endian  :big-endian)
 
-(defgeneric dtype-name (dtype))
-
-(defgeneric dtype-endianness (dtype))
-
-(defgeneric dtype-type (dtype))
-
-(defgeneric dtype-code (dtype))
-
-(defgeneric dtype-size (dtype))
-
 (defparameter *dtypes* '())
 
-(defclass dtype ()
-  ((%type :initarg :type :reader dtype-type)
-   (%code :initarg :code :reader dtype-code)
-   (%size :initarg :size :reader dtype-size)
-   (%endianness :initarg :endianness :reader dtype-endianness)))
+(defstruct (dtype
+             (:constructor dtype (code type reader writer endianness)))
+  (code       ""           :type string)
+  (type       nil          :type (or symbol list))
+  (reader     #'identity   :type function)
+  (writer     #'identity   :type function)
+  (endianness +endianness+ :type endianness))
 
 (defmethod print-object ((dtype dtype) stream)
   (print-unreadable-object (dtype stream :type t)
@@ -38,37 +33,87 @@
        *dtypes*)
       (error "Cannot find dtype for type ~S." type)))
 
-(defun define-dtype (code type size &optional (endianness +endianness+))
-  (let ((dtype (make-instance 'dtype
-                 :code code
-                 :type type
-                 :size size
-                 :endianness endianness)))
+(defun define-dtype (code type reader writer &optional (endianness +endianness+))
+  (let ((dtype (dtype code type reader writer endianness)))
     (pushnew dtype *dtypes* :key #'dtype-code :test #'string=)
     dtype))
 
-(defun define-multibyte-dtype (code type size)
-  (define-dtype (concatenate 'string "<" code) type size :little-endian)
-  (define-dtype (concatenate 'string ">" code) type size :big-endian)
-  (define-dtype code type size +endianness+)
-  (define-dtype (concatenate 'string "|" code) type size)
-  (define-dtype (concatenate 'string "=" code) type size +endianness+))
+(defun define-multibyte-dtype (code type reader/le writer/le reader/be writer/be)
+  (define-dtype (concatenate 'string "<" code) type
+    reader/le writer/le :little-endian)
+  (define-dtype (concatenate 'string ">" code) type
+    reader/be writer/be :big-endian)
+  ;; SBCL produces notes like "deleting unreachable code" here which
+  ;; is OK, because +ENDIANNESS+ is a constant.
+  (let ((default-reader (ecase +endianness+
+                          (:little-endian reader/le)
+                          (:big-endian    reader/be)))
+        (default-writer (ecase +endianness+
+                          (:little-endian writer/le)
+                          (:big-endian    writer/be))))
+    (define-dtype code type default-reader default-writer +endianness+)
+    (define-dtype (concatenate 'string "|" code)
+        type default-reader default-writer +endianness+)
+    (define-dtype (concatenate 'string "=" code) type
+      default-reader default-writer +endianness+)))
 
-(define-dtype "O" 't 64)
-(define-dtype "?" 'bit 8)
-(define-dtype "b" '(unsigned-byte 8) 8)
-(define-multibyte-dtype "i1" '(signed-byte 8) 8)
-(define-multibyte-dtype "i2" '(signed-byte 16) 16)
-(define-multibyte-dtype "i4" '(signed-byte 32) 32)
-(define-multibyte-dtype "i8" '(signed-byte 64) 64)
-(define-multibyte-dtype "u1" '(unsigned-byte 8) 8)
-(define-multibyte-dtype "u2" '(unsigned-byte 16) 16)
-(define-multibyte-dtype "u4" '(unsigned-byte 32) 32)
-(define-multibyte-dtype "u8" '(unsigned-byte 64) 64)
-(define-multibyte-dtype "f4" 'single-float 32)
-(define-multibyte-dtype "f8" 'double-float 64)
-(define-multibyte-dtype "c8" '(complex single-float) 64)
-(define-multibyte-dtype "c16" '(complex double-float) 128)
+(declaim (inline unsigned->signed))
+(defun unsigned->signed (byte)
+  (if (< byte 128)
+      byte
+      (logxor #xff (lognot byte))))
+
+(defun read-signed-byte (stream)
+  (unsigned->signed
+   (read-byte stream)))
+
+(declaim (inline signed->unsigned))
+(defun signed->unsigned (byte)
+  (if (< byte 0)
+      (1+ (logxor #xff (- byte)))
+      byte))
+
+(defun write-signed-byte (byte stream)
+  (write-byte (signed->unsigned byte) stream))
+
+(define-dtype "?" 'bit #'read-byte #'write-byte)
+(define-dtype "b" '(unsigned-byte 8) #'read-byte #'write-byte)
+(define-multibyte-dtype "i1" '(signed-byte 8)
+  #'read-signed-byte #'write-signed-byte
+  #'read-signed-byte #'write-signed-byte)
+(define-multibyte-dtype "i2" '(signed-byte 16)
+  #'nibbles:read-sb16/le #'nibbles:write-sb16/le
+  #'nibbles:read-sb16/be #'nibbles:write-sb16/be)
+(define-multibyte-dtype "i4" '(signed-byte 32)
+  #'nibbles:read-sb32/le #'nibbles:write-sb32/le
+  #'nibbles:read-sb32/be #'nibbles:write-sb32/be)
+(define-multibyte-dtype "i8" '(signed-byte 64)
+  #'nibbles:read-sb64/le #'nibbles:write-sb64/le
+  #'nibbles:read-sb64/be #'nibbles:write-sb64/be)
+(define-multibyte-dtype "u1" '(unsigned-byte 8)
+  #'read-byte #'write-byte
+  #'read-byte #'write-byte)
+(define-multibyte-dtype "u2" '(unsigned-byte 16)
+  #'nibbles:read-ub16/le #'nibbles:write-ub16/le
+  #'nibbles:read-ub16/be #'nibbles:write-ub16/be)
+(define-multibyte-dtype "u4" '(unsigned-byte 32)
+  #'nibbles:read-ub32/le #'nibbles:write-ub32/le
+  #'nibbles:read-ub32/be #'nibbles:write-ub32/be)
+(define-multibyte-dtype "u8" '(unsigned-byte 64)
+  #'nibbles:read-ub64/le #'nibbles:write-ub64/le
+  #'nibbles:read-ub64/be #'nibbles:write-ub64/be)
+(define-multibyte-dtype "f4" 'single-float
+  #'nibbles:read-ieee-single/le #'nibbles:write-ieee-single/le
+  #'nibbles:read-ieee-single/be #'nibbles:write-ieee-single/be)
+(define-multibyte-dtype "f8" 'double-float
+  #'nibbles:read-ieee-double/le #'nibbles:write-ieee-double/le
+  #'nibbles:read-ieee-double/be #'nibbles:write-ieee-double/be)
+(define-multibyte-dtype "c8" '(complex single-float)
+  #'nibbles:read-ieee-single/le #'nibbles:write-ieee-single/le
+  #'nibbles:read-ieee-single/be #'nibbles:write-ieee-single/be)
+(define-multibyte-dtype "c16" '(complex double-float)
+  #'nibbles:read-ieee-double/le #'nibbles:write-ieee-double/le
+  #'nibbles:read-ieee-double/be #'nibbles:write-ieee-double/be)
 
 ;; Finally, let's sort *dtypes* such that type queries always find the most
 ;; specific entry first.
