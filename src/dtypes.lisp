@@ -77,6 +77,10 @@
 
 (define-dtype "?" 'bit #'read-byte #'write-byte)
 (define-dtype "b" '(unsigned-byte 8) #'read-byte #'write-byte)
+;; This is how numpy really saves arrays of bits
+(define-multibyte-dtype "b1" 'bit
+  #'read-byte #'write-byte
+  #'read-byte #'write-byte)
 (define-multibyte-dtype "i1" '(signed-byte 8)
   #'read-signed-byte #'write-signed-byte
   #'read-signed-byte #'write-signed-byte)
