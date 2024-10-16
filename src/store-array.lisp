@@ -1,4 +1,4 @@
-(in-package #:numpy-file-format)
+(in-package #:numpy-npy)
 
 (defun array-metadata-string (array)
   (with-output-to-string (stream nil :element-type 'base-char)

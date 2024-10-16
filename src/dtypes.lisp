@@ -1,4 +1,4 @@
-(in-package #:numpy-file-format)
+(in-package #:numpy-npy)
 
 (deftype endianness () '(member :little-endian :big-endian))
 

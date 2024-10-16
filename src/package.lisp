@@ -1,4 +1,4 @@
-(defpackage numpy-file-format
+(defpackage numpy-npy
   (:use #:common-lisp)
   (:export #:load-array
            #:store-array))

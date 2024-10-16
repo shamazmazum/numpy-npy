@@ -1,4 +1,4 @@
-(in-package #:numpy-file-format)
+(in-package #:numpy-npy)
 
 (defun load-array-metadata (stream)
   ;; The first 6 bytes are a magic string: exactly \x93NUMPY.

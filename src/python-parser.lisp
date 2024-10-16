@@ -1,4 +1,4 @@
-(in-package #:numpy-file-format)
+(in-package #:numpy-npy)
 
 ;;; This parser is not very sophisticated, but it gets the job done.
 

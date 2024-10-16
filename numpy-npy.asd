@@ -1,6 +1,6 @@
-(defsystem :numpy-file-format
+(defsystem :numpy-npy
   :description "Read and write Numpy .npy and .npz files."
-  :author "Marco Heisig <marco.heisig@fau.de>"
+  :author "Marco Heisig <marco.heisig@fau.de>, Vasily Postnicov <shamaz.mazum@gmail.com>"
   :license "MIT"
   :serial t
   :pathname "src"
@@ -10,12 +10,12 @@
                (:file "load-array")
                (:file "store-array"))
   :depends-on (:nibbles :trivial-features :serapeum)
-  :in-order-to ((test-op (test-op :numpy-file-format/tests))))
+  :in-order-to ((test-op (test-op :numpy-npy/tests))))
 
-(defsystem :numpy-file-format/tests
-  :depends-on (:numpy-file-format :uiop)
+(defsystem :numpy-npy/tests
+  :depends-on (:numpy-npy :uiop)
   :serial t
   :pathname "tests"
   :components ((:file "package")
                (:file "tests"))
-  :perform (test-op (o c) (uiop:symbol-call :numpy-file-format/tests '#:run)))
+  :perform (test-op (o c) (uiop:symbol-call :numpy-npy/tests '#:run)))
