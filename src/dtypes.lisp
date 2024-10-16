@@ -15,17 +15,12 @@
 
 (defparameter *dtypes* '())
 
-(defstruct (dtype
-             (:constructor dtype (code type reader writer endianness)))
-  (code       ""           :type string)
-  (type       nil          :type (or symbol list))
-  (reader     #'identity   :type function)
-  (writer     #'identity   :type function)
-  (endianness +endianness+ :type endianness))
-
-(defmethod print-object ((dtype dtype) stream)
-  (print-unreadable-object (dtype stream :type t)
-    (prin1 (dtype-code dtype) stream)))
+(serapeum:defconstructor dtype
+  (code       string)
+  (type       (or symbol list))
+  (reader     (serapeum:-> (stream)   (values t &optional)))
+  (writer     (serapeum:-> (t stream) (values t &optional)))
+  (endianness endianness))
 
 (defun dtype-from-code (code)
   (or (find code *dtypes* :key #'dtype-code :test #'string=)
