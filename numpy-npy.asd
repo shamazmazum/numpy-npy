@@ -13,9 +13,9 @@
   :in-order-to ((test-op (test-op :numpy-npy/tests))))
 
 (defsystem :numpy-npy/tests
-  :depends-on (:numpy-npy :uiop)
+  :depends-on (:numpy-npy :fiveam :uiop)
   :serial t
   :pathname "tests"
   :components ((:file "package")
                (:file "tests"))
-  :perform (test-op (o c) (uiop:symbol-call :numpy-npy/tests '#:run)))
+  :perform (test-op (o c) (uiop:symbol-call :numpy-npy/tests '#:run-tests)))

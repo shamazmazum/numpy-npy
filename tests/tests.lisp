@@ -1,8 +1,4 @@
-(defpackage :numpy-file-format/tests
-  (:use :cl :numpy-file-format)
-  (:export :run))
-
-(in-package :numpy-file-format/tests)
+(in-package :numpy-npy/tests)
 
 (defparameter *array-element-types*
   `(single-float
@@ -43,10 +39,21 @@
             (coerce (random 2) element-type)))
     array))
 
-(defun run ()
+(defun run-tests ()
+  (every #'identity
+         (mapcar (lambda (suite)
+                   (let ((status (run suite)))
+                     (explain! status)
+                     (results-status status)))
+                 '(numpy-npy))))
+
+(def-suite numpy-npy :description "Test everything")
+(in-suite numpy-npy)
+
+(test io
   (loop for element-type in *array-element-types* do
-    (loop for array-dimensions in *array-dimensions* do
-      (let ((array (make-random-array array-dimensions element-type)))
-        (uiop:with-temporary-file (:pathname file)
-          (store-array array file)
-          (assert (array= array (load-array file))))))))
+        (loop for array-dimensions in *array-dimensions* do
+              (let ((array (make-random-array array-dimensions element-type)))
+                (uiop:with-temporary-file (:pathname file)
+                  (store-array array file)
+                  (is (array= array (load-array file))))))))
