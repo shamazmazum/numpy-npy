@@ -58,13 +58,17 @@
           (error "Reading arrays in Fortran order is not yet supported."))
         ;; Skip the header
         (file-position stream header-octets)
-        (if (subtypep element-type 'complex)
-            (loop for index below total-size do
-                  (setf (row-major-aref array index)
-                        (complex
-                         (funcall reader stream)
-                         (funcall reader stream))))
-            (loop for index below total-size do
-                  (setf (row-major-aref array index)
-                        (funcall reader stream))))
+        (cond
+          ((not (dtype-by-elt-io-p dtype))
+           (funcall reader (flatten array) stream))
+          ((subtypep element-type 'complex)
+           (loop for index below total-size do
+                 (setf (row-major-aref array index)
+                       (complex
+                        (funcall reader stream)
+                        (funcall reader stream)))))
+          (t
+           (loop for index below total-size do
+                 (setf (row-major-aref array index)
+                       (funcall reader stream)))))
         array))))

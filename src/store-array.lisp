@@ -33,11 +33,16 @@
       (loop repeat (- metadata-length (length metadata) 1) do
             (write-byte (char-code #\space) stream))
       (write-byte (char-code #\newline) stream) ; Finish with a newline.
-        (if (subtypep (array-element-type array) 'complex)
-            (loop for index below (array-total-size array)
-                  for c = (row-major-aref array index) do
-                  (funcall writer (realpart c) stream)
-                  (funcall writer (imagpart c) stream))
-            (loop for index below (array-total-size array)
-                  for c = (row-major-aref array index) do
-                  (funcall writer c stream))))))
+        (cond
+          ((not (dtype-by-elt-io-p dtype))
+           (funcall writer (flatten array) stream))
+          ((subtypep (array-element-type array) 'complex)
+           (loop for index below (array-total-size array)
+                 for c = (row-major-aref array index) do
+                 (funcall writer (realpart c) stream)
+                 (funcall writer (imagpart c) stream)))
+          (t
+           (loop for index below (array-total-size array)
+                 for c = (row-major-aref array index) do
+                 (funcall writer c stream))))))
+  (values))

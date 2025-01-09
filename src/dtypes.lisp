@@ -16,11 +16,17 @@
 (defparameter *dtypes* '())
 
 (serapeum:defconstructor dtype
-  (code       string)
-  (type       (or symbol list))
-  (reader     (serapeum:-> (stream)   (values t &optional)))
-  (writer     (serapeum:-> (t stream) (values t &optional)))
-  (endianness endianness))
+  (code        string)
+  (type        (or symbol list))
+  (reader      function)
+  (writer      function)
+  (endianness  endianness)
+  ;; Unfortunately, nibbles does all IO in a loop, so even
+  ;; READ-FOO-INTO-SEQUENCE call read(2) million times. When we do not
+  ;; use nibbles, we can call Common Lisp standard READ-SEQUENCE and
+  ;; WRITE-SEQUENCE, which do only one call of read(2). In this can
+  ;; this boolean flag is set to NIL.
+  (by-elt-io-p boolean))
 
 (defun dtype-from-code (code)
   (or (find code *dtypes* :key #'dtype-code :test #'string=)
@@ -34,33 +40,39 @@
        *dtypes*)
       (error "Cannot find dtype for type ~S." type)))
 
-(defun define-dtype (code type reader writer &optional (endianness +endianness+))
-  (let ((dtype (dtype code type reader writer endianness)))
+(defun define-dtype (code type reader writer
+                     &optional (by-elt-io-p t) (endianness +endianness+))
+  (let ((dtype (dtype code type reader writer endianness by-elt-io-p)))
     (pushnew dtype *dtypes* :key #'dtype-code :test #'string=)
     dtype))
 
-(defun define-multibyte-dtype (code type reader/le writer/le reader/be writer/be)
+(defun define-multibyte-dtype (code type
+                               reader/le writer/le
+                               reader/be writer/be
+                               &optional (by-elt-io-p t))
   (define-dtype (concatenate 'string "<" code) type
-    reader/le writer/le :little-endian)
+    reader/le writer/le by-elt-io-p :little-endian)
   (define-dtype (concatenate 'string ">" code) type
-    reader/be writer/be :big-endian)
+    reader/be writer/be by-elt-io-p :big-endian)
   (let ((default-reader (select-io-function reader/le reader/be))
         (default-writer (select-io-function writer/le writer/be)))
-    (define-dtype code type default-reader default-writer +endianness+)
+    (define-dtype code type default-reader default-writer by-elt-io-p +endianness+)
     (define-dtype (concatenate 'string "|" code)
-        type default-reader default-writer +endianness+)
+        type default-reader default-writer by-elt-io-p +endianness+)
     (define-dtype (concatenate 'string "=" code) type
-      default-reader default-writer +endianness+)))
+      default-reader default-writer by-elt-io-p +endianness+)))
 
-(define-dtype "?" 'bit #'read-byte #'write-byte)
-(define-dtype "b" '(unsigned-byte 8) #'read-byte #'write-byte)
+(define-dtype "?" 'bit #'read-bit-sequence #'write-bit-sequence nil)
+(define-dtype "b" '(unsigned-byte 8) #'read-ub8-sequence #'write-ub8-sequence nil)
 ;; This is how numpy really saves arrays of bits
 (define-multibyte-dtype "b1" 'bit
-  #'read-byte #'write-byte
-  #'read-byte #'write-byte)
+  #'read-bit-sequence #'write-bit-sequence
+  #'read-bit-sequence #'write-bit-sequence
+  nil)
 (define-multibyte-dtype "i1" '(signed-byte 8)
-  #'read-signed-byte #'write-signed-byte
-  #'read-signed-byte #'write-signed-byte)
+  #'read-sb8-sequence #'write-sb8-sequence
+  #'read-sb8-sequence #'write-sb8-sequence
+  nil)
 (define-multibyte-dtype "i2" '(signed-byte 16)
   #'nibbles:read-sb16/le #'nibbles:write-sb16/le
   #'nibbles:read-sb16/be #'nibbles:write-sb16/be)
@@ -71,8 +83,9 @@
   #'nibbles:read-sb64/le #'nibbles:write-sb64/le
   #'nibbles:read-sb64/be #'nibbles:write-sb64/be)
 (define-multibyte-dtype "u1" '(unsigned-byte 8)
-  #'read-byte #'write-byte
-  #'read-byte #'write-byte)
+  #'read-ub8-sequence #'write-ub8-sequence
+  #'read-ub8-sequence #'write-ub8-sequence
+  nil)
 (define-multibyte-dtype "u2" '(unsigned-byte 16)
   #'nibbles:read-ub16/le #'nibbles:write-ub16/le
   #'nibbles:read-ub16/be #'nibbles:write-ub16/be)
