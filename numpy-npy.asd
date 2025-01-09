@@ -4,7 +4,7 @@
   :license "MIT"
   :serial t
   :pathname "src"
-  :version "0.1"
+  :version "0.2"
   :components ((:file "package")
                (:file "missing-io")
                (:file "dtypes")
