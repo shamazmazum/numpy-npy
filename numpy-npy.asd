@@ -5,6 +5,7 @@
   :serial t
   :pathname "src"
   :components ((:file "package")
+               (:file "missing-io")
                (:file "dtypes")
                (:file "python-parser")
                (:file "load-array")
