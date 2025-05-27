@@ -47,15 +47,13 @@
 
 (defun load-array (filename)
   (with-open-file (stream filename :direction :input :element-type '(unsigned-byte 8))
-    (multiple-value-bind (dimensions dtype fortran-order header-octets)
+    (multiple-value-bind (dimensions dtype fortran-order-p header-octets)
         (load-array-metadata stream)
-      (let* ((element-type (dtype-type dtype))
+      (let* ((dimensions (if fortran-order-p (reverse dimensions) dimensions))
+             (element-type (dtype-type dtype))
              (array (make-array dimensions :element-type element-type))
              (total-size (array-total-size array))
              (reader (dtype-reader dtype)))
-        ;; TODO Respect fortran-order
-        (unless (not fortran-order)
-          (error "Reading arrays in Fortran order is not yet supported."))
         ;; Skip the header
         (file-position stream header-octets)
         (cond
@@ -71,4 +69,8 @@
            (loop for index below total-size do
                  (setf (row-major-aref array index)
                        (funcall reader stream)))))
-        array))))
+        (if fortran-order-p
+            (aops:permute
+             (reverse (loop for i below (array-rank array) collect i))
+             array)
+            array)))))

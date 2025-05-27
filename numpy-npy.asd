@@ -11,7 +11,7 @@
                (:file "python-parser")
                (:file "load-array")
                (:file "store-array"))
-  :depends-on (:nibbles :trivial-features :serapeum)
+  :depends-on (:nibbles :trivial-features :serapeum :array-operations)
   :in-order-to ((test-op (test-op :numpy-npy/tests))))
 
 (defsystem :numpy-npy/tests
