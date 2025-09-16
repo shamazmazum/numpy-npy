@@ -10,10 +10,8 @@
             (array-dimensions array))))
 
 (defun store-array (array filename)
-  ;; We open the file twice - once with a stream element type of
-  ;; (unsigned-byte 8) to write the header, and once with a stream element
-  ;; type suitable for writing the array content.
-  (let* ((dtype (dtype-from-type (array-element-type array)))
+  (let* ((element-type (array-element-type array))
+         (dtype (dtype-from-type element-type))
          (writer (dtype-writer dtype))
          (metadata (array-metadata-string array))
          (metadata-length (- (* 64 (ceiling (+ 10 (length metadata)) 64)) 10)))
@@ -33,16 +31,16 @@
       (loop repeat (- metadata-length (length metadata) 1) do
             (write-byte (char-code #\space) stream))
       (write-byte (char-code #\newline) stream) ; Finish with a newline.
-        (cond
-          ((not (dtype-by-elt-io-p dtype))
-           (funcall writer (flatten array) stream))
-          ((subtypep (array-element-type array) 'complex)
-           (loop for index below (array-total-size array)
+      (cond
+        ((subtypep element-type 'complex)
+         (let* ((total-size (array-total-size array))
+                (tmp (make-array (* total-size 2)
+                                 :element-type (second element-type))))
+           (loop for index below total-size
                  for c = (row-major-aref array index) do
-                 (funcall writer (realpart c) stream)
-                 (funcall writer (imagpart c) stream)))
-          (t
-           (loop for index below (array-total-size array)
-                 for c = (row-major-aref array index) do
-                 (funcall writer c stream))))))
+                 (setf (aref tmp (+ (* index 2)))   (realpart c)
+                       (aref tmp (+ (* index 2) 1)) (imagpart c)))
+           (funcall writer tmp stream)))
+        (t
+         (funcall writer (flatten array) stream)))))
   (values))

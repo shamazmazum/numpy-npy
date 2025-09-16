@@ -57,18 +57,17 @@
         ;; Skip the header
         (file-position stream header-octets)
         (cond
-          ((not (dtype-by-elt-io-p dtype))
-           (funcall reader (flatten array) stream))
           ((subtypep element-type 'complex)
-           (loop for index below total-size do
-                 (setf (row-major-aref array index)
-                       (complex
-                        (funcall reader stream)
-                        (funcall reader stream)))))
+           (let ((tmp (make-array (* total-size 2)
+                                  :element-type (second element-type))))
+             (funcall reader tmp stream)
+             (loop for index below total-size do
+                   (setf (row-major-aref array index)
+                         (complex
+                          (aref tmp (+ (* index 2)))
+                          (aref tmp (+ (* index 2) 1)))))))
           (t
-           (loop for index below total-size do
-                 (setf (row-major-aref array index)
-                       (funcall reader stream)))))
+           (funcall reader (flatten array) stream)))
         (if fortran-order-p
             (aops:permute
              (reverse (loop for i below (array-rank array) collect i))
