@@ -68,8 +68,16 @@
                           (aref tmp (+ (* index 2) 1)))))))
           (t
            (funcall reader (flatten array) stream)))
-        (if fortran-order-p
-            (aops:permute
-             (reverse (loop for i below (array-rank array) collect i))
-             array)
-            array)))))
+        (cond
+          (fortran-order-p
+           (when (and (> (array-total-size array) (* 100 100))
+                      (> (array-rank array) 1))
+             (warn
+              #.(concatenate 'string
+                             "The array is in column-major order. "
+                             "Transposition to row-major order is extremely slow "
+                             "in the current implementation.")))
+           (aops:permute
+            (reverse (loop for i below (array-rank array) collect i))
+            array))
+          (t array))))))
