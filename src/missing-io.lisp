@@ -75,7 +75,7 @@
     stream)
   array)
 
-;; All writes from sequence / read to sequence stuff is shit
+;; All writes from sequence / read to sequence stuff is shit in nibbles
 (defconstant +buffer-length+ 1000)
 
 (macrolet ((def-reader (name type elt-size f)
