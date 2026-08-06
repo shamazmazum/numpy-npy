@@ -1,5 +1,7 @@
 (defun do-all()
-  (ql:quickload :numpy-npy/tests)
+  (handler-case
+      (asdf:load-system :numpy-npy/tests)
+    (error () (uiop:quit 1)))
   (uiop:quit
    (if (uiop:call-function "numpy-npy/tests:run-tests")
        0 1)))
