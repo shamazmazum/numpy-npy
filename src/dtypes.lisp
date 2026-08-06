@@ -55,48 +55,48 @@
     (define-dtype (concatenate 'string "=" code)
         type default-reader default-writer +endianness+)))
 
-(define-dtype "?" 'bit #'read-bit-sequence #'write-bit-sequence)
-(define-dtype "b" '(unsigned-byte 8) #'read-ub8-sequence #'write-ub8-sequence)
+(define-dtype "?" 'bit #'read-bit-into-vector #'write-bit-sequence)
+(define-dtype "b" '(unsigned-byte 8) #'read-ub8-into-vector #'write-ub8-sequence)
 ;; This is how numpy really saves arrays of bits
 (define-multibyte-dtype "b1" 'bit
-  #'read-bit-sequence #'write-bit-sequence
-  #'read-bit-sequence #'write-bit-sequence)
+  #'read-bit-into-vector #'write-bit-sequence
+  #'read-bit-into-vector #'write-bit-sequence)
 (define-multibyte-dtype "i1" '(signed-byte 8)
-  #'read-sb8-sequence #'write-sb8-sequence
-  #'read-sb8-sequence #'write-sb8-sequence)
+  #'read-sb8-into-vector #'write-sb8-sequence
+  #'read-sb8-into-vector #'write-sb8-sequence)
 (define-multibyte-dtype "i2" '(signed-byte 16)
-  #'nibbles:read-sb16/le-into-sequence #'nibbles:write-sb16/le-sequence
-  #'nibbles:read-sb16/be-into-sequence #'nibbles:write-sb16/be-sequence)
+  #'read-sb16/le-into-vector #'nibbles:write-sb16/le-sequence
+  #'read-sb16/be-into-vector #'nibbles:write-sb16/be-sequence)
 (define-multibyte-dtype "i4" '(signed-byte 32)
-  #'nibbles:read-sb32/le-into-sequence #'nibbles:write-sb32/le-sequence
-  #'nibbles:read-sb32/be-into-sequence #'nibbles:write-sb32/be-sequence)
+  #'read-sb32/le-into-vector #'nibbles:write-sb32/le-sequence
+  #'read-sb32/be-into-vector #'nibbles:write-sb32/be-sequence)
 (define-multibyte-dtype "i8" '(signed-byte 64)
-  #'nibbles:read-sb64/le-into-sequence #'nibbles:write-sb64/le-sequence
-  #'nibbles:read-sb64/be-into-sequence #'nibbles:write-sb64/be-sequence)
+  #'read-sb64/le-into-vector #'nibbles:write-sb64/le-sequence
+  #'read-sb64/be-into-vector #'nibbles:write-sb64/be-sequence)
 (define-multibyte-dtype "u1" '(unsigned-byte 8)
-  #'read-ub8-sequence #'write-ub8-sequence
-  #'read-ub8-sequence #'write-ub8-sequence)
+  #'read-ub8-into-vector #'write-ub8-sequence
+  #'read-ub8-into-vector #'write-ub8-sequence)
 (define-multibyte-dtype "u2" '(unsigned-byte 16)
-  #'nibbles:read-ub16/le-into-sequence #'nibbles:write-ub16/le-sequence
-  #'nibbles:read-ub16/be-into-sequence #'nibbles:write-ub16/be-sequence)
+  #'read-ub16/le-into-vector #'nibbles:write-ub16/le-sequence
+  #'read-ub16/be-into-vector #'nibbles:write-ub16/be-sequence)
 (define-multibyte-dtype "u4" '(unsigned-byte 32)
-  #'nibbles:read-ub32/le-into-sequence #'nibbles:write-ub32/le-sequence
-  #'nibbles:read-ub32/be-into-sequence #'nibbles:write-ub32/be-sequence)
+  #'read-ub32/le-into-vector #'nibbles:write-ub32/le-sequence
+  #'read-ub32/be-into-vector #'nibbles:write-ub32/be-sequence)
 (define-multibyte-dtype "u8" '(unsigned-byte 64)
-  #'nibbles:read-ub64/le-into-sequence #'nibbles:write-ub64/le-sequence
-  #'nibbles:read-ub64/be-into-sequence #'nibbles:write-ub64/be-sequence)
+  #'read-ub64/le-into-vector #'nibbles:write-ub64/le-sequence
+  #'read-ub64/be-into-vector #'nibbles:write-ub64/be-sequence)
 (define-multibyte-dtype "f4" 'single-float
-  #'nibbles:read-ieee-single/le-into-sequence #'nibbles:write-ieee-single/le-sequence
-  #'nibbles:read-ieee-single/be-into-sequence #'nibbles:write-ieee-single/be-sequence)
+  #'read-single/le-into-vector #'nibbles:write-ieee-single/le-sequence
+  #'read-single/be-into-vector #'nibbles:write-ieee-single/be-sequence)
 (define-multibyte-dtype "f8" 'double-float
-  #'nibbles:read-ieee-double/le-into-sequence #'nibbles:write-ieee-double/le-sequence
-  #'nibbles:read-ieee-double/be-into-sequence #'nibbles:write-ieee-double/be-sequence)
+  #'read-double/le-into-vector #'nibbles:write-ieee-double/le-sequence
+  #'read-double/be-into-vector #'nibbles:write-ieee-double/be-sequence)
 (define-multibyte-dtype "c8" '(complex single-float)
-  #'nibbles:read-ieee-single/le-into-sequence #'nibbles:write-ieee-single/le-sequence
-  #'nibbles:read-ieee-single/be-into-sequence #'nibbles:write-ieee-single/be-sequence)
+  #'read-single/le-into-vector #'nibbles:write-ieee-single/le-sequence
+  #'read-single/be-into-vector #'nibbles:write-ieee-single/be-sequence)
 (define-multibyte-dtype "c16" '(complex double-float)
-  #'nibbles:read-ieee-double/le-into-sequence #'nibbles:write-ieee-double/le-sequence
-  #'nibbles:read-ieee-double/be-into-sequence #'nibbles:write-ieee-double/be-sequence)
+  #'read-double/le-into-vector #'nibbles:write-ieee-double/le-sequence
+  #'read-double/be-into-vector #'nibbles:write-ieee-double/be-sequence)
 
 ;; Finally, let's sort *dtypes* such that type queries always find the most
 ;; specific entry first.
