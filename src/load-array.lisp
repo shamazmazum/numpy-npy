@@ -8,7 +8,7 @@
                (eql (read-byte stream) 77)  ; M
                (eql (read-byte stream) 80)  ; P
                (eql (read-byte stream) 89)) ; Y
-    (error "Not a Numpy file."))
+    (error 'npy-invalid))
   (let* (;; The next 1 byte is an unsigned byte: the major version number
          ;; of the file format, e.g. \x01.
          (major-version (read-byte stream))

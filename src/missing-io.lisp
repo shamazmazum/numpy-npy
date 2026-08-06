@@ -68,7 +68,7 @@
   (declare (optimize (speed 3)))
   (unless (= (read-sequence array stream)
              (length array))
-    (error "EOF"))
+    (error 'npy-eof))
   array)
 
 (serapeum:-> write-ub8-vector ((io-vector (unsigned-byte 8)) stream)
@@ -104,7 +104,7 @@
                                            (,f buffer j))
                                      (incf read-elements))
                           finally (unless (= read-elements input-length)
-                                    (error "EOF reached")))
+                                    (error 'npy-eof)))
                     vector)))))
 
   ;; Bits

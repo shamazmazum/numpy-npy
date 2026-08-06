@@ -22,7 +22,7 @@
               (unread-char c stream)
               (return (read-python-integer stream)))
              (t
-              (error "Invalid character: ~S" c)))))))
+              (error 'npy-invalid :character c)))))))
 
 (defun read-python-string (delimiter stream)
   (coerce

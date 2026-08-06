@@ -6,6 +6,7 @@
   :pathname "src"
   :version "0.3"
   :components ((:file "package")
+               (:file "conditions")
                (:file "missing-io")
                (:file "dtypes")
                (:file "python-parser")

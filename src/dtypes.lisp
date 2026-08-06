@@ -24,7 +24,7 @@
 
 (defun dtype-from-code (code)
   (or (find code *dtypes* :key #'dtype-code :test #'string=)
-      (error "Cannot find dtype for the code ~S." code)))
+      (error 'wrong-dtype :code code)))
 
 (defun dtype-from-type (type)
   (or (find-if
@@ -32,7 +32,7 @@
          (and (eq (dtype-endianness dtype) +endianness+)
               (subtypep type (dtype-type dtype))))
        *dtypes*)
-      (error "Cannot find dtype for type ~S." type)))
+      (error 'wrong-dtype :type)))
 
 (defun define-dtype (code type reader writer
                      &optional (endianness +endianness+))
